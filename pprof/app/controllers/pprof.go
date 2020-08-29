@@ -1,9 +1,11 @@
 package controllers
 
 import (
-	"github.com/revel/revel"
 	"net/http"
 	"net/http/pprof"
+	"strings"
+
+	"github.com/revel/revel"
 )
 
 type Pprof struct {
@@ -15,7 +17,13 @@ type Pprof struct {
 type PprofHandler func(http.ResponseWriter, *http.Request)
 
 func (r PprofHandler) Apply(req *revel.Request, resp *revel.Response) {
-	r(resp.Out.Server.GetRaw().(http.ResponseWriter), req.In.GetRaw().(*http.Request))
+	request := req.In.GetRaw().(*http.Request)
+	idx := strings.Index(request.URL.Path, "/debug/pprof/")
+	if idx >= 0 {
+		request.URL.Path = request.URL.Path[idx:]
+	}
+
+	r(resp.Out.Server.GetRaw().(http.ResponseWriter), request)
 }
 
 func (c Pprof) Profile() revel.Result {
