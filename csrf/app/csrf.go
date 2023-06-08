@@ -8,7 +8,7 @@ import (
 	"io"
 	"math"
 	"net/url"
-
+	"fmt"
 	"strings"
 
 	"github.com/revel/revel"
@@ -54,7 +54,7 @@ func CsrfFilter(c *revel.Controller, fc []revel.Filter) {
 	if !foundToken {
 		token = RefreshToken(c)
 	} else {
-		token = t.(string)
+		token = t //.(string)
 	}
 
 	referer, refErr := url.Parse(c.Request.Referer())
@@ -99,7 +99,7 @@ func validToken(token string, isSameOrigin, foundToken bool, c *revel.Controller
 
 	var requestToken string
 	// First check for token in post data
-	if c.Request.Method == "POST" {
+	if c.Request.Method == "POST" || c.Request.Method == "PUT" {
 		requestToken = c.Params.Get("csrftoken")
 	}
 
@@ -109,6 +109,7 @@ func validToken(token string, isSameOrigin, foundToken bool, c *revel.Controller
 	}
 
 	if requestToken == "" || !compareToken(requestToken, token) {
+		fmt.Println(requestToken, token)
 		c.Result = c.Forbidden("REVEL CSRF: Invalid token.")
 		return
 	}
