@@ -92,10 +92,10 @@ func validToken(token string, isSameOrigin, foundToken bool, c *revel.Controller
 	}
 
 	// Same origin
-	if !isSameOrigin {
-		c.Result = c.Forbidden("REVEL CSRF: Same origin mismatch.")
-		return
-	}
+	// if !isSameOrigin {
+	// 	c.Result = c.Forbidden("REVEL CSRF: Same origin mismatch.")
+	// 	return
+	// }
 
 	var requestToken string
 	// First check for token in post data
