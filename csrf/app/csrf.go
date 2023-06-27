@@ -8,7 +8,6 @@ import (
 	"io"
 	"math"
 	"net/url"
-	"fmt"
 	"strings"
 
 	"github.com/revel/revel"
@@ -64,6 +63,10 @@ func CsrfFilter(c *revel.Controller, fc []revel.Filter) {
 	}
 
 	requestUrl := getFullRequestURL(c)
+	
+	// c.Log.Errorf("========= %v %v", requestUrl, referer)
+	// fmt.Println("=========", requestUrl, referer)
+
 	isSameOrigin := sameOrigin(requestUrl, referer)
 	// If the Request method isn't in the white listed methods
 	if !allowedMethods[c.Request.Method] && !IsExempt(c) {
@@ -92,10 +95,10 @@ func validToken(token string, isSameOrigin, foundToken bool, c *revel.Controller
 	}
 
 	// Same origin
-	// if !isSameOrigin {
-	// 	c.Result = c.Forbidden("REVEL CSRF: Same origin mismatch.")
-	// 	return
-	// }
+	if !isSameOrigin {
+		c.Result = c.Forbidden("REVEL CSRF: Same origin mismatch.")
+		return
+	}
 
 	var requestToken string
 	// First check for token in post data
@@ -109,7 +112,6 @@ func validToken(token string, isSameOrigin, foundToken bool, c *revel.Controller
 	}
 
 	if requestToken == "" || !compareToken(requestToken, token) {
-		fmt.Println(requestToken, token)
 		c.Result = c.Forbidden("REVEL CSRF: Invalid token.")
 		return
 	}
@@ -146,19 +148,19 @@ func getFullRequestURL(c *revel.Controller) (requestUrl *url.URL) {
 		requestUrl.Host = host
 	}
 
-	// If no scheme found in headers use the revel server settings
-	if requestUrl.Scheme == "" {
-		// Fix the Request.URL, it is missing information, go http server does this
-		if revel.HTTPSsl {
-			requestUrl.Scheme = "https"
-		} else {
-			requestUrl.Scheme = "http"
-		}
-		fixedUrl := requestUrl.Scheme + "://" + c.Request.Host + c.Request.URL.Path
-		if purl, err := url.Parse(fixedUrl); err == nil {
-			requestUrl = purl
-		}
-	}
+	// // If no scheme found in headers use the revel server settings
+	// if requestUrl.Scheme == "" {
+	// 	// Fix the Request.URL, it is missing information, go http server does this
+	// 	if revel.HTTPSsl {
+	// 		requestUrl.Scheme = "https"
+	// 	} else {
+	// 		requestUrl.Scheme = "http"
+	// 	}
+	// 	fixedUrl := requestUrl.Scheme + "://" + c.Request.Host + c.Request.URL.Path
+	// 	if purl, err := url.Parse(fixedUrl); err == nil {
+	// 		requestUrl = purl
+	// 	}
+	// }
 
 	c.Log.Debug("getFullRequestURL ", "requesturl", requestUrl.String())
 	return
@@ -175,7 +177,16 @@ func compareToken(requestToken, token string) bool {
 
 // Validates same origin policy
 func sameOrigin(u1, u2 *url.URL) bool {
-	return u1.Scheme == u2.Scheme && u1.Hostname() == u2.Hostname()
+	if u1.Hostname() != u2.Hostname() {
+		return false
+	}
+	if u1.Scheme == "" {
+		return true
+	}
+	if u2.Scheme == "" {
+		return true
+	}
+	return u1.Scheme == u2.Scheme
 }
 
 // Add a function to the template functions map
