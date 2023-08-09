@@ -121,7 +121,8 @@ func validToken(token string, isSameOrigin, foundToken bool, c *revel.Controller
 
 // Helper function to fix the full URL in the request
 func getFullRequestURL(c *revel.Controller) (requestUrl *url.URL) {
-	requestUrl = c.Request.URL
+	var u = *c.Request.URL
+	requestUrl = &u
 
 	c.Log.Debug("Using ", "request url host", requestUrl.Host, "request host", c.Request.Host, "cookie domain", revel.CookieDomain)
 	// Update any of the information based on the headers
